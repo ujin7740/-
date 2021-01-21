@@ -20,18 +20,19 @@ train_dataset = datasets.CIFAR10(root="../data/CIFAR_10", train=True, download=T
                                  transform=transforms.Compose([
                                    transforms.RandomHorizontalFlip(),
                                    transforms.ToTensor(),
-                                   transforms.Normalize((0.5, 0.5, 0.5))]))
+                                   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]))
 test_dataset = datasets.CIFAR10(root="../data/CIFAR_10", train=False,
                                 transform=transforms.Compose([
                                   transforms.RandomHorizontalFlip(),
                                   transforms.ToTensor(),
                                   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]))
-train_loader = torch.utils.data.DownLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 for(X_train, y_train) in train_loader:
   print('X_train:', X_train.size(), 'type:', X_train.type())
   print('y_train:', y_train.size(), 'type:', y_train.type())
+  break
 
 pltsize = 1
 plt.figure(figsize=(10 * pltsize, pltsize))
@@ -56,7 +57,7 @@ class CNN(nn.Module):
     x = F.relu(x)
     x = self.pool(x)
     x = self.conv2(x)
-    x = F.relu()
+    x = F.relu(x)
     x = self.pool(x)
 
     x = x.view(-1, 8 * 8 * 16)
@@ -74,7 +75,7 @@ criterion = nn.CrossEntropyLoss()
 
 print(model)
 
-def train(model, train_loader, optimzer, log_interval):
+def train(model, train_loader, optimizer, log_interval):
   model.train()
   for batch_idx, (image, label) in enumerate(train_loader):
     image = image.to(DEVICE)
@@ -86,7 +87,7 @@ def train(model, train_loader, optimzer, log_interval):
     optimizer.step()
 
     if batch_idx % log_interval == 0:
-      print("Train Epoch {} [{}.{}({:.0f}%)]\tTrain loss: {:.6f}".format(EPOCHS, batch_idx*len(image), len(train_loader.dataset), 100.*batch_idx/len(train_loader), loss.item()))
+      print("Train Epoch: {} [{}/{}({:.0f}%)]\tTrain loss: {:.6f}".format(EPOCHS, batch_idx*len(image), len(train_loader.dataset), 100. * batch_idx / len(train_loader), loss.item()))
 
 def evaluate(model, test_loader):
   model.eval()
@@ -99,7 +100,7 @@ def evaluate(model, test_loader):
       label = label.to(DEVICE)
       output = model(image)
       test_loss += criterion(output, label).item()
-      prediction = output.max(1, keepdim = True)[1]
+      prediction = output.max(1, keepdim=True)[1]
       correct += prediction.eq(label.view_as(prediction)).sum().item()
 
     test_loss /= len(test_loader.dataset)
